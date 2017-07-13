@@ -1,0 +1,164 @@
+---
+title: "alli_data"
+author: "Ciera Martinez"
+date: "July 11, 2017"
+output: html_document
+---
+
+**Purpose**: The purpose is to to correlate compounds to oviposition index. Mike wants to use multivariable regression or decision/regression to predict behavior. He also said to use linear or nonparametric. 
+
+
+```{r}
+## Library Prereqs
+library(lme4)
+library(ggplot2)
+library(languageR)
+library(xlsx)
+library(reshape2)
+
+## Functions
+
+modelcheck <- function(model, h = 8, w = 10.5) { ## because plot(lmer.obj) doesn't work rs <- residuals(model) fv <- fitted(model) quartz(h = h, w = w) plot(rs ~ fv) quartz(h = h, w = w) plot(sqrt(abs(rs)) ~ fv) quartz(h = h, w = w) qqnorm(rs) qqline(rs) }  
+```
+
+### Read in Data
+
+From .xls file.
+
+```{r}
+
+sheet1 <- read.xlsx("../data/raw/alli_example_data.xlsx", 
+                sheetIndex = 1)
+
+## Check Sheet 1
+head(sheet1)
+dim(sheet1)
+duplicated(sheet1)
+
+### These are averaged and normalized
+
+sheet2 <- read.xlsx("../data/alli_example_data.xlsx", 
+                sheetIndex = 2)
+
+## Check Sheet 2
+head(sheet2)
+dim(sheet2)
+colnames(sheet2)
+
+sheet3 <- read.xlsx("../data/alli_example_data.xlsx", 
+                sheetIndex = 3)
+
+## Check Sheet 3
+head(sheet3)
+dim(sheet3)
+```
+
+## Cleaning, transforming, and merging
+
+There were two different experiments that were performed.
+1. Measuring of the yeast chemical compounds present, as detailed in `sheet1`
+2. Measurments of fly behavior laying eggs with presense of said yeast `sheet2` and `sheet3`
+
+I believe to do multivariate analysis on trying to find correlations between chemical compunds present and Oviposition.index, we just have to assume it is one experiment i.e. merge the data together.
+
+Each measurement will also have additional columns corresponding to what is measured for each yeast type. 
+
+```{r}
+#########################
+## Sheet 1
+##########################
+
+## What are these variance, range, mean columns? These don't make sense to me.
+##        I am going to remove.
+
+# Peak position doesn't really make sense either (prob describes chemical component peak?), but is we are just assuming it is the chemical compound called, I will just use that.
+# Update: Looks like a peak can call an identical compound and this causes problems later
+#         therefore I will merge this column with 
+
+## Check
+colnames(sheet1)
+
+# Remove
+sheet1 <- sheet1[,-c(9:11)]
+
+# add new column
+sheet1$compound_peak <- paste(sheet1$compound, sheet1$peak_position, sep = "_")
+
+## Check
+head(sheet1)
+
+## Now get rid of 1 and 2
+sheet1 <- sheet1[,-c(1,2)]
+
+# Transform Sheet1 first melt the Yeast columns from wide to long
+sheet1_melt <- melt(sheet1, id.vars = "compound_peak",
+     variable.name = "yeast")
+
+## Check
+head(sheet1_melt)
+
+# Transform Sheet 1 compound components from long to wid
+sheet1_cast <- dcast(sheet1_melt, yeast ~ compound_peak, value.var = "value")
+
+## [x] Something wrong. Is there duplicate rows? Yes. See above.
+
+## Check
+head(sheet1_cast)
+colnames(sheet1_cast) #There are 35 compounds measured for each yeast
+
+## rename back to original
+
+sheet1 <- sheet1_cast
+
+## Get rid of Yeast 3:6
+
+sheet1 <- sheet1[-c(3:6),]
+head(sheet1)
+```
+
+### Sheet 2 and 3 
+
+```{r}
+######################
+## sheet2 and sheet3
+######################
+
+# make sure they have same columns
+colnames(sheet3)
+colnames(sheet2)
+
+# add together
+sheet23 <- rbind(sheet2, sheet3)
+
+## Now merge all three by yeast
+## First make sure they are named the same
+
+colnames(sheet23)
+summary(sheet23$Yeast)
+summary(sheet1$yeast)
+
+## Fix
+colnames(sheet23)[2] <- "yeast"
+
+sheet23$yeast <- gsub("Yeast 1", "Yeast.1", sheet23$yeast)
+sheet23$yeast <- gsub("Yeast 2", "Yeast.2", sheet23$yeast)
+
+## Now we can merge
+
+## Check
+dim(sheet23)
+dim(sheet1)
+
+## Merge
+sheet123 <- merge(sheet23, sheet1, by = "yeast")
+
+##Check
+dim(sheet123)
+head(sheet123)
+
+
+write.csv(sheet123, "../data/output/combinedData.csv")
+```
+
+
+

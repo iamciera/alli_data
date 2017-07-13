@@ -1,0 +1,49 @@
+---
+title: "alli_data"
+author: "Ciera Martinez"
+date: "July 11, 2017"
+output: html_document
+---
+
+**Purpose**: The purpose is to to correlate compounds to oviposition index. Mike wants to use multivariable regression or decision/regression to predict behavior. He also said to use linear or nonparametric. 
+
+
+```{r}
+## Library Prereqs
+library(lme4)
+library(ggplot2)
+library(languageR)
+library(xlsx)
+library(reshape2)
+
+## Functions
+
+modelcheck <- function(model, h = 8, w = 10.5) { ## because plot(lmer.obj) doesn't work rs <- residuals(model) fv <- fitted(model) quartz(h = h, w = w) plot(rs ~ fv) quartz(h = h, w = w) plot(sqrt(abs(rs)) ~ fv) quartz(h = h, w = w) qqnorm(rs) qqline(rs) }  
+```
+
+### Read in Data
+
+
+```{r}
+aq_DF <- read.csv("../data/output/combinedData.csv", row.names = 1)
+
+dim(aq_DF)
+summary(aq_DF)
+str(aq_DF) 
+
+# Im'm going to force all into num
+colnames(aq_DF)
+
+aq_DF[,7:40] <- apply(aq_DF[,7:40], 2, function(x) as.numeric(as.character(x)))
+```
+
+## Visulize Distributions
+
+```{r}
+
+ggplot(aq_DF, aes(aq_DF$Oviposition.index)) + 
+  geom_histogram()
+
+## I think that we need more measurements.
+
+
