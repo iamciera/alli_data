@@ -1,0 +1,162 @@
+---
+title: "alli_data"
+author: "Ciera Martinez"
+date: "July 17, 2017"
+output: pdf_document
+---
+
+**Purpose**: The purpose is to to correlate compounds to oviposition index. Mike wants to use multivariable regression or decision/regression to predict behavior. He also said to use linear or nonparametric. 
+
+**About Data**
+
+Three excel files -
+`egglay..` - all the behavior data for all fly lines and all yeast. Trials are organized by different yeast (one yeast per sheet)
+
+`gcms_vals_norepeats` - the first column here is the peak_position and we can use as a "name" for each peak. these are true values for reach averaged yeast
+
+`gcms_vals_normalized_norepeats` - this is the data normalized (across rows). Basically the same as what I gave you before without the mean/variance columns and only the peak_position column
+Ready to model when you are!
+
+```{r}
+## Library Prereqs
+library(lme4)
+library(ggplot2)
+library(languageR)
+library(xlsx)
+library(reshape2)
+
+## Functions
+
+## modelcheck <- function(model, h = 8, w = 10.5) { ## because plot(lmer.obj) doesn't work rs <- residuals(model) fv <- fitted(model) quartz(h = h, w = w) plot(rs ~ fv) quartz(h = h, w = w) plot(sqrt(abs(rs)) ~ fv) quartz(h = h, w = w) qqnorm(rs) qqline(rs) }  
+```
+
+### Read in Data
+
+From .xls file.
+
+```{r}
+############## egglay_liqagar_72hr_rawdata_formodel.xlsx
+############## EL_RME1027
+EL_RME1027 <- read.xlsx("../data/raw/egglay_liqagar_72hr_rawdata_formodel.xlsx", 
+                sheetIndex = 1)
+
+## Check 
+head(EL_RME1027)
+dim(EL_RME1027)
+duplicated(EL_RME1027)
+
+############## EL_RME1028
+EL_RME1028 <- read.xlsx("../data/raw/egglay_liqagar_72hr_rawdata_formodel.xlsx", 
+                sheetIndex = 2)
+
+head(EL_RME1028)
+dim(EL_RME1028)
+duplicated(EL_RME1028)
+
+############## EL_RME1512
+EL_RME1512 <- read.xlsx("../data/raw/egglay_liqagar_72hr_rawdata_formodel.xlsx", 
+                sheetIndex = 3)
+
+## Check 
+head(EL_RME1512)
+dim(EL_RME1512)
+duplicated(EL_RME1512)
+
+############## EL_RME1511
+
+EL_RME1511 <- read.xlsx("../data/raw/egglay_liqagar_72hr_rawdata_formodel.xlsx", 
+                sheetIndex = 4)
+
+head(EL_RME1511)
+dim(EL_RME1511)
+duplicated(EL_RME1511)
+
+########## EL_RME1553
+EL_RME1553 <- read.xlsx("../data/raw/egglay_liqagar_72hr_rawdata_formodel.xlsx", 
+                sheetIndex = 5)
+
+head(EL_RME1553)
+dim(EL_RME1553)
+duplicated(EL_RME1553)
+
+############## gcms_vals_norepeats.xlsx
+############## gcms_no_repeats
+gcms_no_repeats <- read.xlsx("../data/raw/gcms_vals_norepeats.xlsx", 
+                sheetIndex = 1)
+
+## Check 
+head(gcms_no_repeats)
+dim(gcms_no_repeats)
+duplicated(gcms_no_repeats)
+
+############## gcms_vals_normalized_norepeats.xlsx
+############## gcms_norm
+gcms_norm <- read.xlsx("../data/raw/gcms_vals_normalized_norepeats.xlsx", 
+                sheetIndex = 1)
+
+## Check 
+head(gcms_norm)
+dim(gcms_norm)
+duplicated(gcms_norm)
+```
+
+
+## Cleaning, transforming, and merging
+
+There were two different experiments that were performed.
+1. Measuring of the yeast chemical compounds present, as detailed in `../data/raw/gcms_vals_normalized_norepeats.xlsx`
+2. Measurments of fly behavior laying eggs with presense of said yeast `egglay_liqagar_72hr_rawdata_formodel.xlsx`
+
+I believe to do multivariate analysis on trying to find correlations between chemical compunds present and Oviposition.index, we just have to assume it is one experiment i.e. merge the data together.
+
+```{r}
+# Add all EL sheets
+
+egg_lay <- rbind(EL_RME1553, EL_RME1511, EL_RME1512, EL_RME1028, EL_RME1027)
+
+head(egg_lay)
+dim(egg_lay)
+
+summary(egg_lay)
+
+#make date column be date
+egg_lay$Date <- as.Date(egg_lay$Date , "%y-%d-%m")
+```
+
+## GCMS
+
+```{r}
+head(gcms_norm)
+
+# make peak a factor
+gcms_norm$peak_pos <- as.factor(gcms_norm$peak_pos)
+
+# Transform - first melt the Yeast columns from wide to long
+gcms_melt <- melt(gcms_norm, id.vars = "peak_pos",
+     variable.name = "Yeast")
+
+# Transform - compound components from long to wid
+gcms_cast <- dcast(gcms_melt, yeast ~ peak_pos, value.var = "value")
+
+# Check
+dim(gcms_cast)
+
+# rename back to original
+gcms_norm <- gcms_cast
+
+# Check and fix for Merge 
+colnames(gcms_norm)[1] <- "Yeast"
+colnames(egg_lay)
+
+dim(gcms_norm)
+dim(egg_lay)
+
+# Merge
+all_data <- merge(egg_lay, gcms_norm, by = "Yeast")
+
+## check
+head(all_data)
+dim(all_data)
+
+write.csv(all_data, "../data/output/combinedData_17July2017.csv")
+

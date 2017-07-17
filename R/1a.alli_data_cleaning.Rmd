@@ -2,7 +2,7 @@
 title: "alli_data"
 author: "Ciera Martinez"
 date: "July 11, 2017"
-output: html_document
+output: pdf_document
 ---
 
 **Purpose**: The purpose is to to correlate compounds to oviposition index. Mike wants to use multivariable regression or decision/regression to predict behavior. He also said to use linear or nonparametric. 
@@ -18,7 +18,7 @@ library(reshape2)
 
 ## Functions
 
-modelcheck <- function(model, h = 8, w = 10.5) { ## because plot(lmer.obj) doesn't work rs <- residuals(model) fv <- fitted(model) quartz(h = h, w = w) plot(rs ~ fv) quartz(h = h, w = w) plot(sqrt(abs(rs)) ~ fv) quartz(h = h, w = w) qqnorm(rs) qqline(rs) }  
+## modelcheck <- function(model, h = 8, w = 10.5) { ## because plot(lmer.obj) doesn't work rs <- residuals(model) fv <- fitted(model) quartz(h = h, w = w) plot(rs ~ fv) quartz(h = h, w = w) plot(sqrt(abs(rs)) ~ fv) quartz(h = h, w = w) qqnorm(rs) qqline(rs) }  
 ```
 
 ### Read in Data
@@ -37,7 +37,7 @@ duplicated(sheet1)
 
 ### These are averaged and normalized
 
-sheet2 <- read.xlsx("../data/alli_example_data.xlsx", 
+sheet2 <- read.xlsx("../data/raw/alli_example_data.xlsx", 
                 sheetIndex = 2)
 
 ## Check Sheet 2
@@ -45,7 +45,7 @@ head(sheet2)
 dim(sheet2)
 colnames(sheet2)
 
-sheet3 <- read.xlsx("../data/alli_example_data.xlsx", 
+sheet3 <- read.xlsx("../data/raw/alli_example_data.xlsx", 
                 sheetIndex = 3)
 
 ## Check Sheet 3

@@ -1,0 +1,91 @@
+---
+title: "alli_data"
+author: "Ciera Martinez"
+date: "July 17, 2017"
+output: pdf_document
+---
+
+**Purpose**: The purpose is to to correlate compounds to oviposition index. Mike wants to use multivariable regression or decision/regression to predict behavior. He also said to use linear or nonparametric. 
+
+**About Data**:
+
+"Yeast":         
+"Date":         
+"Line":          
+"Media":         
+"Exp":          
+"CTL":
+"Total.eggs":    
+"OI": 
+"eggs.fly":
+"Yeast.side":   
+"Cage.position":
+
+```{r}
+colnames(aq_DF)
+## Library Prereqs
+library(lme4)
+library(ggplot2)
+library(languageR)
+library(xlsx)
+library(reshape2)
+
+## Functions
+
+## modelcheck <- function(model, h = 8, w = 10.5) { ## because plot(lmer.obj) doesn't work rs <- residuals(model) fv <- fitted(model) quartz(h = h, w = w) plot(rs ~ fv) quartz(h = h, w = w) plot(sqrt(abs(rs)) ~ fv) quartz(h = h, w = w) qqnorm(rs) qqline(rs) }  
+```
+
+### Read in Data
+
+
+```{r}
+aq_DF <- read.csv("../data/output/combinedData_17July2017.csv", row.names = 1)
+
+dim(aq_DF)
+summary(aq_DF)
+str(aq_DF) 
+
+# Im'm going to force all into num
+colnames(aq_DF)
+
+aq_DF[,12:53] <- apply(aq_DF[,12:53], 2, function(x) as.numeric(as.character(x)))
+```
+
+## Visulize Distributions
+
+```{r}
+
+ggplot(aq_DF, aes(aq_DF$CTL)) + 
+  geom_histogram() +
+  theme_bw()
+
+qqnorm(aq_DF$CTL)
+qqline(aq_DF$CTL)
+
+ggplot(aq_DF, aes(aq_DF$Exp)) + 
+  geom_histogram() +
+  stat_bin(binwidth = 1) +
+  theme_bw()
+
+qqnorm(aq_DF$Exp)
+qqline(aq_DF$Exp)
+
+ggplot(aq_DF, aes(aq_DF$eggs.fly)) + 
+  geom_histogram() +
+  stat_bin(binwidth = 1) +
+  theme_bw()
+
+qqnorm(aq_DF$eggs.fly)
+qqline(aq_DF$eggs.fly)
+
+ggplot(aq_DF, aes(aq_DF$OI)) + 
+  geom_histogram() +
+  theme_bw()
+
+qqnorm(aq_DF$OI)
+qqline(aq_DF$OI)
+```
+
+
+
+
